@@ -1,0 +1,92 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions for zero-trust authorization
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAuthorizedAdmin() {
+      return isSignedIn() && request.auth.token.email.lower() == 'jitu1199pal@gmail.com';
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // 1. Users collection
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow create: if isOwner(userId);
+      // Normal users CANNOT promote themselves to admin or directly adjust their XP balance
+      allow update: if isAuthorizedAdmin() || (
+        isOwner(userId) &&
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['isAdmin', 'xpBalance', 'adminToken'])
+      );
+      allow delete: if isAuthorizedAdmin();
+    }
+
+    // 2. Apps collection (Free & Pro testing requests)
+    match /apps/{appId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() &&
+        request.resource.data.createdByUserId == request.auth.uid &&
+        request.resource.data.status == 'PENDING_APPROVAL' &&
+        // Normal users cannot approve their own payment or inject tokens
+        (request.resource.data.tier == 'FREE' || request.resource.data.paymentStatus == 'PAYMENT_PENDING_SUBMISSION');
+
+      allow update: if isAuthorizedAdmin() || (
+        isSignedIn() &&
+        resource.data.createdByUserId == request.auth.uid &&
+        // Normal user can only submit UTR reference and payer name for payment verification
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['upiPayerName', 'upiUtrNumber', 'paymentScreenshotUrl', 'paymentStatus']) &&
+        request.resource.data.paymentStatus == 'PAYMENT_PENDING_VERIFICATION' &&
+        resource.data.paymentStatus == 'PAYMENT_PENDING_SUBMISSION'
+      );
+
+      allow delete: if isAuthorizedAdmin();
+    }
+
+    // 3. Testers collection (Recruitment & device profiles)
+    match /testers/{testerId} {
+      // Admin can read all testers; normal users can only read their own profile
+      allow read: if isAuthorizedAdmin() || isOwner(testerId);
+      allow create: if isOwner(testerId) && request.resource.data.status == 'PENDING';
+      // Only authorized admin can approve or reject tester status
+      allow update: if isAuthorizedAdmin() || (
+        isOwner(testerId) &&
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['status', 'totalVerifiedXp', 'assignedCampaignIds'])
+      );
+      allow delete: if isAuthorizedAdmin();
+    }
+
+    // 4. Daily Reports collection (15-day feedback & bugs)
+    match /daily_reports/{reportId} {
+      allow read: if isSignedIn();
+      // Tester can submit report for themselves with initial status PENDING_REVIEW
+      allow create: if isSignedIn() &&
+        request.resource.data.testerId == request.auth.uid &&
+        request.resource.data.status == 'PENDING_REVIEW' &&
+        request.resource.data.xpAwarded == false;
+
+      // Only admin can approve reports or set xpAwarded flag
+      allow update: if isAuthorizedAdmin();
+      allow delete: if isAuthorizedAdmin();
+    }
+
+    // 5. XP Transactions collection (Auditable immutable ledger)
+    match /xp_ledger/{txId} {
+      allow read: if isSignedIn() && (isAuthorizedAdmin() || resource.data.testerId == request.auth.uid);
+      // ONLY authorized admin or trusted backend function can write to XP ledger
+      allow create: if isAuthorizedAdmin();
+      allow update, delete: if false; // Immutable ledger
+    }
+
+    // 6. Notifications
+    match /notifications/{notifId} {
+      allow read: if isSignedIn();
+      allow write: if isAuthorizedAdmin();
+    }
+  }
+}

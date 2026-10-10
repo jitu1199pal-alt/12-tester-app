@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- TestCircle Badge ring -->
+    <path
+        android:fillColor="#1976D2"
+        android:pathData="M54,26A28,28 0 1,0 54,82A28,28 0 1,0 54,26Z" />
+    <path
+        android:fillColor="#00E5FF"
+        android:pathData="M54,30A24,24 0 1,0 54,78A24,24 0 1,0 54,30Z" />
+    <path
+        android:fillColor="#0D1B2A"
+        android:pathData="M54,35A19,19 0 1,0 54,73A19,19 0 1,0 54,35Z" />
+    <!-- Android Checkmark inside Circle -->
+    <path
+        android:fillColor="#00E5FF"
+        android:pathData="M50.5,60.8 L42.2,52.5 L39.5,55.2 L50.5,66.2 L68.5,48.2 L65.8,45.5 Z" />
+    <!-- Pulse Dots representing 13 testers community node -->
+    <path
+        android:fillColor="#00E5FF"
+        android:pathData="M54,20A3,3 0 1,0 54,26A3,3 0 1,0 54,20Z" />
+    <path
+        android:fillColor="#64B5F6"
+        android:pathData="M84,54A3,3 0 1,0 84,60A3,3 0 1,0 84,54Z" />
+    <path
+        android:fillColor="#64B5F6"
+        android:pathData="M24,54A3,3 0 1,0 24,60A3,3 0 1,0 24,54Z" />
+</vector>

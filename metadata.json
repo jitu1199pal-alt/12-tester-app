@@ -1,0 +1,6 @@
+{
+  "name": "TestCircle",
+  "description": "Android App Testing Community platform for Free & Pro 15-day testing campaigns, tester recruitment, manual UPI verification, daily reports, and XP rewards.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
